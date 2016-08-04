@@ -1,6 +1,3 @@
-bin/
-obj/
-ValorNAV_deploy/
-*.dll
 .DS_Store
 .svn/
+
