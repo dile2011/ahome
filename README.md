@@ -1,2 +1,0 @@
-# ahomepro
-my life data
