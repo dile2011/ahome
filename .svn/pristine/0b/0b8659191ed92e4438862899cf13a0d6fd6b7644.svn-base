@@ -1,0 +1,256 @@
+//
+//  ABaseHomeController.m
+//  ahome
+//
+//  Created by dilei liu on 15/1/27.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AHomePageController.h"
+#import "AHomeLevelController.h"
+#import "ANewHomeController.h"
+#import "UIImageView+WebCache.h"
+#import "ParallaxHeaderView.h"
+#import "AHomeServer.h"
+#import "ABlurMenu.h"
+#import "AHomeMemberCell.h"
+#import "AMenuPanelController.h"
+
+#define tool_size_height    45
+
+@implementation AHomePageController
+
+- (instancetype)init {
+    self = [super init];
+    _homeInfos = [NSMutableArray array];
+    _lookStyle = MineHomeStyle;
+    
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    _homeInfos = [[NSMutableArray alloc]init];
+    
+    AHomeLevelController *homeleve = [AHomeLevelController sharedInstance];
+    UIBarButtonItem *moreButtonItem = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"home_tab_more.png"] style:UIBarButtonItemStylePlain target:self action:@selector(moreMenu)];
+    UIBarButtonItem *shareButtomItem = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"home_tab_share.png"] style:UIBarButtonItemStylePlain target:self action:@selector(shareMenu)];
+    homeleve.navigationItem.rightBarButtonItems = @[moreButtonItem,shareButtomItem];
+    
+    [self reloadHomeInfo];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.tableView setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+    
+}
+
+- (void)startLoading {
+    [self reloadHomeInfo];
+    [super startLoading];
+}
+
+- (void)moreMenu {
+    
+    // 日常
+    ABlurMenu *pagingMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_findme.png" andColor:[UIColor colorWithRed:143./255 green:176./255 blue:32./255 alpha:1.] andSelect:^{
+        [self doPaging];
+    }];
+    
+    ABlurMenu *shareMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_share.png" andColor:[UIColor colorWithRed:116./255 green:86./255 blue:168./255. alpha:1.] andSelect:^{
+        [self addDynamic];
+    }];
+    
+    NSArray *everydayData = @[pagingMesh,shareMesh];
+    NSDictionary *everydayDic = @{@"data":everydayData,@"title":@"日常",@"bgColor":[UIColor colorWithRed:69./255. green:70./255 blue:159/255. alpha:1.]};
+
+    
+    // 不常规
+    ABlurMenu *addMemberMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_addperson.png" andColor:[UIColor colorWithRed:70./255 green:60./255 blue:206./255. alpha:1.] andSelect:^{
+        [self addMember];
+    }];
+    
+    ABlurMenu *addHomeMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_addhome.png" andColor:[UIColor colorWithRed:33./255 green:175./255 blue:88./255. alpha:1.] andSelect:^{
+        [self addHome];
+    }];
+    
+    NSArray *halfwayData = @[addMemberMesh,addHomeMesh];
+    NSDictionary *halfwayDic = @{@"data":halfwayData,@"title":@"非常规",@"bgColor":[UIColor colorWithRed:59./255. green:71./255 blue:87/255. alpha:.5]};
+
+    // 我的家庭
+    ABlurMenu *mineHome = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_mine.png" andColor:[UIColor colorWithRed:70./255 green:60./255 blue:206./255. alpha:1.] andSelect:^{
+        [self lookHomeByStyle:MineHomeStyle];
+    }];
+    
+    ABlurMenu *parentHome = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_parent.png" andColor:[UIColor colorWithRed:33./255 green:175./255 blue:88./255. alpha:1.] andSelect:^{
+        [self lookHomeByStyle:ParentHomeStyle];
+    }];
+    
+    /*ABlurMenu *mergeHome = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_merge.png" andColor:[UIColor colorWithRed:250./255 green:95./255 blue:0./255. alpha:1.] andSelect:^{
+        [self addHome];
+    }];*/
+    
+    NSArray *showHomeData = @[mineHome,parentHome];
+    NSDictionary *showHomeDic = @{@"data":showHomeData,@"title":@"我的家庭",@"bgColor":[UIColor colorWithRed:14./255. green:115./255 blue:176/255. alpha:1.]};
+    
+    NSArray *menus = @[showHomeDic,everydayDic,halfwayDic];
+    _panelMenu = [[APanelMenuController alloc]initWithMenus:menus CloseStr:@"关闭" blurType:CollectionBlurViewType];
+    [_panelMenu addToSuperView:self.view];
+}
+
+- (void)shareMenu {
+    // 日常
+    ABlurMenu *sinaShare = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_share_moments.png" andColor:[UIColor colorWithRed:116./255 green:86./255 blue:168./255. alpha:1.] andSelect:^{
+        [self share];
+    }];
+    
+    ABlurMenu *wxinShare = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_share_qzone.png" andColor:[UIColor colorWithRed:69./255. green:70./255 blue:159/255. alpha:1.] andSelect:^{
+        [self share];
+    }];
+
+    NSArray *menus = @[sinaShare,wxinShare];
+    _panelMenu = [[APanelMenuController alloc]initWithMenus:menus CloseStr:@"关闭" blurType:DefaultBlurViewType];
+    [_panelMenu addToSuperView:self.view];
+}
+
+- (void)reloadHomeInfo {
+    [[AServerFactory getServerInstance:@"AHomeServer"]getHomeByUid:0 callback:^(NSArray *homeInfos) {
+        [_homeInfos removeAllObjects];
+        [_homeInfos addObjectsFromArray:homeInfos];
+        
+        for (AHomeInfo *homeInfo in homeInfos) {
+            for (AHomeMember *member in homeInfo.members) {
+                __weak AHomeMember *memberWeak = member;
+                [member setSelected:^{
+                    [self memberNodeAction:memberWeak];
+                }];
+                
+                [member setMenuOperate:^(OperateType ot) {
+                    [self menuOperateAction:ot member:memberWeak];
+                }];
+            }
+        }
+        
+        if (_homeInfos.count > 0) {
+            AHomeInfo *homeInfo = [homeInfos objectAtIndex:_lookStyle];
+            ParallaxHeaderView *headerView = (ParallaxHeaderView*)self.tableView.tableHeaderView;
+            [headerView.imageView setImageWithURL:[NSURL URLWithString:homeInfo.photo]];
+        }
+        
+        [self.tableView reloadData];
+        [self stopLoading];
+        
+    } failureCallback:^(NSString *resp) {
+        [self stopLoading];
+    }];
+}
+
+- (void)memberNodeAction:(AHomeMember*)member {
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    AHomeMemberCell *homeCell = (AHomeMemberCell*)[self.tableView cellForRowAtIndexPath:indexPath];
+    
+    AHomeInfo *homeinfo = [_homeInfos objectAtIndex:_lookStyle];
+    int index = (int)[homeinfo.members indexOfObject:member];
+    AHomeMemberNodeView *nodeView = [homeCell.memberNodes objectAtIndex:index];
+    
+    CGPoint point = [homeCell convertPoint:nodeView.center toView:self.view.window];
+    AMenuPanelController *menuPanel = [AMenuPanelController shareInstance:point member:member];
+    
+    [self.view.window addSubview:menuPanel.view];
+}
+
+- (void)menuOperateAction:(OperateType)ot member:(AHomeMember*)member {
+    switch (ot) {
+        case AuthOperate: {
+            [[AHomeLevelController sharedInstance]phoneAuth:member];
+            break;
+        }
+            
+        case InviteOperate:
+            [[AHomeLevelController sharedInstance]sendInvite:member];
+            
+            break;
+            
+        case DeleteOperate:
+            [[AHomeLevelController sharedInstance]deleteMember:member];
+            break;
+            
+        default:
+            break;
+    }
+    
+    [AMenuPanelController destroyInstance];
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {    
+    static NSString *CellIdentifier = @"cell";
+    UITableViewCell *cell = (UITableViewCell*)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    
+    if (cell == nil) {
+        cell = [[AHomeMemberCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+    }
+    
+    AHomeInfo *homeInfo = [_homeInfos objectAtIndex:_lookStyle];
+    int index = (int)homeInfo.members.count - (int)cell.subviews.count;
+    [((AHomeMemberCell*)cell) setDataForCell:homeInfo.members];
+    
+    if (index == 1) {
+        [tableView scrollRectToVisible:CGRectMake(0, tableView.contentSize.height - tableView.bounds.size.height, tableView.bounds.size.width, tableView.bounds.size.height) animated:YES];
+    }
+    
+    return cell;
+}
+
+#pragma mark - Table view data source
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return _homeInfos.count>0?1:0;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    AHomeInfo *homeInfo = [_homeInfos objectAtIndex:_lookStyle];
+    return [AHomeMemberCell heightForCell:(int)homeInfo.members.count];
+}
+
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    [super scrollViewDidScroll:scrollView];
+    [(ParallaxHeaderView *)self.tableView.tableHeaderView layoutHeaderViewForScrollViewOffset:scrollView.contentOffset];
+}
+
+- (void)doPaging {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]paging];
+}
+
+- (void)addDynamic {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]addDynamic];
+}
+
+- (void)share {
+    
+}
+
+- (void)addMember {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]addMember];
+}
+
+- (void)addHome {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]newHome];
+}
+
+- (void)lookHomeByStyle:(LookHomeStyle)lookStyle {
+    [_panelMenu closeMenu];
+    _lookStyle = lookStyle;
+    [self reloadHomeInfo];
+}
+
+
+@end

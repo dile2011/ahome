@@ -1,0 +1,35 @@
+//
+//  APanelMenuController.h
+//  demoe
+//
+//  Created by andson-dile on 15/3/6.
+//  Copyright (c) 2015年 andson. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "ABlurBaseController.h"
+
+
+typedef enum {
+    DefaultBlurViewType,    // 默认为网格式布局
+    TableBlurViewType
+    
+} BlurViewType;
+
+@interface APanelMenuController : UIViewController {
+    NSArray *_menus;
+    NSString *_closeStr;
+    
+    BlurViewType _blurViewType;
+    ABlurBaseController *_baseBlurVC;
+    
+    float _blurMarginLeft;
+}
+
+- (instancetype)initWithMenus:(NSArray*)menus CloseStr:(NSString*)colseStr;
+- (instancetype)initWithMenus:(NSArray*)menus CloseStr:(NSString*)colseStr blurType:(BlurViewType)blurType;
+
+- (void)closeMenu;
+
+- (void)addToSuperView:(UIView*)superView;
+@end

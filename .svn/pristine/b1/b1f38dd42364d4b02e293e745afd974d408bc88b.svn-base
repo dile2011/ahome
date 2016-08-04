@@ -1,0 +1,13 @@
+//
+//  ABaseAttriPanelView.h
+//  ahome
+//
+//  Created by andson-dile on 15/6/26.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface ABaseAttriPanelView : UIView
+
+@end

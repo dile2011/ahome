@@ -1,0 +1,48 @@
+//
+//  AFamilyBaseCircleController.m
+//  ahome
+//
+//  Created by andson-dile on 15/7/2.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AFamilyBaseCircleController.h"
+
+@implementation AFamilyBaseCircleController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self.view setBackgroundColor:[UIColor whiteColor]];
+    
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+}
+
+#pragma mark - Table view data source
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return 1;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 0.;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    static NSString *cellIdentifier = @"UITableViewCell";
+    UITableViewCell *cell = (UITableViewCell*)[tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    if (cell == nil) {
+        Class controllerClass = NSClassFromString(cellIdentifier);
+        cell = [[controllerClass alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
+        [cell setBackgroundColor:[UIColor clearColor]];
+    }
+    
+    return cell;
+}
+
+@end

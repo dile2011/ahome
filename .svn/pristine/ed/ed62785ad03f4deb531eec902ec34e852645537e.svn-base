@@ -1,0 +1,243 @@
+//
+//  AUserHomePageController.m
+//  ahome
+//
+//  Created by andson-dile on 15/6/24.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "UIViewController+MJPopupViewController.h"
+#import "AUserHomePageController.h"
+#import "AHomeMember.h"
+#import "AHomeServer.h"
+#import "ABlurMenu.h"
+#import "APopupHandler.h"
+#import "ANewHomeController.h"
+#import "UIImageView+WebCache.h"
+#import "AMenuPanelController.h"
+
+#import "AUserAddMemberController.h"
+#import "AUserPhoneAuthController.h"
+#import "AUserInviteActiveController.h"
+#import "AUserDeleteMemberController.h"
+
+@implementation AUserHomePageController
+
+- (instancetype)initWithLookStyle:(LookHomeStyle)lookStyle {
+    self = [super init];
+    self.lookStyle = lookStyle;
+    
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = @"我的家庭";
+    
+    UIBarButtonItem *moreButtonItem = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"home_tab_more.png"] style:UIBarButtonItemStylePlain target:self action:@selector(moreMenu)];
+    UIBarButtonItem *negativeSpacer = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace                                                                               target:nil action:nil];
+    negativeSpacer.width = -10;
+    self.navigationItem.rightBarButtonItems = @[negativeSpacer, moreButtonItem];
+}
+
+- (void)reloadHomeInfo {
+    [[AServerFactory getServerInstance:@"AHomeServer"]getHomeByUid:0 callback:^(NSArray *homeInfos) {
+        [self.homeInfos removeAllObjects];
+        [self.homeInfos addObjectsFromArray:homeInfos];
+        
+        for (AHomeInfo *homeInfo in homeInfos) {
+            for (AHomeMember *member in homeInfo.members) {
+                __weak AHomeMember *memberWeak = member;
+                [member setSelected:^{
+                    [self memberNodeAction:memberWeak];
+                }];
+                
+                [member setMenuOperate:^(OperateType ot) {
+                    [self menuOperateAction:ot member:memberWeak];
+                }];
+            }
+        }
+        
+        [self.tableView reloadData];
+        [self stopLoading];
+        
+        AHomeInfo *homeInfo = [homeInfos firstObject];
+        ParallaxHeaderView *headerView = (ParallaxHeaderView*)self.tableView.tableHeaderView;
+        [headerView.imageView setImageWithURL:[NSURL URLWithString:homeInfo.photo]];
+        
+    } failureCallback:^(NSString *resp) {
+        [self stopLoading];
+    }];
+}
+
+- (void)addKenBurnView {
+    _kenBurnsView = [[JSAnimatedImagesView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) isAnimatioin:NO];
+    _kenBurnsView.delegate = self;
+    [self setView:_kenBurnsView];
+    [self.view addSubview:[self blurView]];
+}
+
+- (UIView*)blurView {
+    UIVisualEffectView *visualEffectView = nil;
+    CGRect blurBounds = CGRectMake(0, 0, 0, 0);
+    
+    blurBounds = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
+    
+    UIVisualEffect *blurEffect;
+    blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    visualEffectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    visualEffectView.frame = blurBounds;
+    
+    return visualEffectView;
+}
+
+- (void)menuOperateAction:(OperateType)ot member:(AHomeMember*)member {
+    switch (ot) {
+        case AuthOperate: {
+            [self phoneAuth:member];
+            break;
+        }
+            
+        case InviteOperate:
+            [self sendInvite:member];
+            
+            break;
+            
+        case DeleteOperate:
+            [self deleteMember:member];
+            break;
+            
+        default:
+            break;
+    }
+    
+    [AMenuPanelController destroyInstance];
+}
+
+- (void)moreMenu {
+    NSMutableArray *menus = [NSMutableArray array];
+    
+    // 不常规
+    ABlurMenu *addMemberMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_addperson.png" andColor:[UIColor colorWithRed:59./255. green:71./255 blue:87/255. alpha:.5] andSelect:^{
+        [self addMember];
+    }];
+    
+    ABlurMenu *addHomeMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_addhome.png" andColor:[UIColor colorWithRed:59./255. green:71./255 blue:87/255. alpha:.5] andSelect:^{
+        [self addHome];
+    }];
+    
+    NSArray *halfwayData = @[addMemberMesh,addHomeMesh];
+    NSDictionary *halfwayDic = @{@"data":halfwayData,@"title":@"",@"bgColor":[UIColor colorWithRed:59./255. green:71./255 blue:87/255. alpha:.5]};
+    [menus addObject:halfwayDic];
+    
+    _panelMenu = [[APanelMenuController alloc]initWithMenus:menus CloseStr:@"关闭" blurType:CollectionBlurViewType];
+    [_panelMenu addToSuperView:self.view];
+}
+
+
+/**
+ * 手机认证
+ */
+- (void)phoneAuth:(AHomeMember*)member {
+    
+    AQuickPopupController *popVC = [[AUserPhoneAuthController alloc]initWithMemberInfo:member delegate:self];
+    [APopupHandler sharedInstance].pageHeight = 260.;
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomePhoneAuthController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [self.homeInfos objectAtIndex:self.lookStyle];
+    ((AHomePhoneAuthController*)popVC).familyId = homeInfo.familyId;
+    ((AHomePhoneAuthController*)popVC).index = member.mkey;
+    
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+/**
+ * 发送邀请
+ */
+- (void)sendInvite:(AHomeMember*)member {
+    AQuickPopupController *popVC = [[AUserInviteActiveController alloc]initWithMemberInfo:member delegate:self];
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomeInviteActiveController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [self.homeInfos objectAtIndex:self.lookStyle];
+    ((AHomeInviteActiveController*)popVC).familyId = homeInfo.familyId;
+    
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+
+/**
+ * 删除一个成员
+ */
+- (void)deleteMember:(AHomeMember*)member {
+    AQuickPopupController *popVC = [[AUserDeleteMemberController alloc]initWithMemberInfo:member delegate:self];
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomeDeleteMemberController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [self.homeInfos objectAtIndex:self.lookStyle];
+    ((AHomeDeleteMemberController*)popVC).familyId = homeInfo.familyId;
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+- (void)addMember {
+    [_panelMenu closeMenu];
+    
+    AQuickPopupController *popVC = [[AUserAddMemberController alloc]initWithDelegate:self];
+    [APopupHandler sharedInstance].pageHeight = 290.;
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomeAddMemberController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [self.homeInfos objectAtIndex:self.lookStyle];
+    ((AHomeAddMemberController*)popVC).familyId = homeInfo.familyId;
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+//==============================================
+- (void)afterPhoneAuthSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [self reloadHomeInfo];
+}
+
+- (void)afterMemberInviteSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [self reloadHomeInfo];
+}
+
+- (void)afterMemberAddSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [self reloadHomeInfo];
+}
+
+- (void)afterMemberDeleteSucces {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [self reloadHomeInfo];
+}
+
+
+- (void)addHome {
+    [_panelMenu closeMenu];
+    
+    ANewHomeController *newAtHomeCon = [[ANewHomeController alloc]initWithPushStyle:NO];
+    UINavigationController *navi = [[UINavigationController alloc]initWithRootViewController:newAtHomeCon];
+    [self.navigationController presentViewController:navi animated:YES completion:^{
+        
+    }];
+}
+
+@end

@@ -1,0 +1,219 @@
+//
+//  ABaseHomeController.m
+//  ahome
+//
+//  Created by dilei liu on 15/1/27.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AHomePageController.h"
+#import "AHomeLevelController.h"
+#import "ANewHomeController.h"
+#import "UIImageView+WebCache.h"
+#import "ParallaxHeaderView.h"
+#import "AHomeServer.h"
+#import "ABlurMenu.h"
+#import "AHomeMemberCell.h"
+#import "AMenuPanelController.h"
+
+#define tool_size_height    45
+
+@implementation AHomePageController
+
+- (instancetype)init {
+    self = [super init];
+    _homeInfos = [NSMutableArray array];
+    
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    AHomeLevelController *homeleve = [AHomeLevelController sharedInstance];
+    UIImage *moreImage = [UIImage imageNamed:@"home_tab_more.png"];
+    UIImage *moreImage_sel = [UIImage imageNamed:@"home_tab_more_h.png"];
+    UIButton *optionBtn = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, moreImage.size.width, moreImage.size.height)];
+    [optionBtn setImage:moreImage forState:UIControlStateNormal];
+    [optionBtn setImage:moreImage_sel forState:UIControlStateHighlighted];
+    UIBarButtonItem *optoinBar = [[UIBarButtonItem alloc]initWithCustomView:optionBtn];
+    [optionBtn addTarget:self action:@selector(openMenuPlan) forControlEvents:UIControlEventTouchUpInside];
+    
+    UIBarButtonItem *negativeSpacer = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                                                                   target:nil action:nil];
+    negativeSpacer.width = -10;
+    homeleve.navigationItem.rightBarButtonItems = @[negativeSpacer, optoinBar];
+    
+    [self reloadHomeInfo];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.tableView setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+}
+
+- (void)startLoading {
+    [self reloadHomeInfo];
+    [super startLoading];
+}
+
+- (void)openMenuPlan {
+    ABlurMenu *findMeMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_findme.png" andColor:[UIColor colorWithRed:143./255 green:176./255 blue:32./255 alpha:1.] andSelect:^{
+        [self doPaging];
+    }];
+    
+    ABlurMenu *shareMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_share.png" andColor:[UIColor colorWithRed:116./255 green:86./255 blue:168./255. alpha:1.] andSelect:^{
+        [self share];
+    }];
+    
+    ABlurMenu *addMemberMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_addperson.png" andColor:[UIColor colorWithRed:70./255 green:60./255 blue:206./255. alpha:1.] andSelect:^{
+        [self addMember];
+    }];
+    
+    ABlurMenu *addHomeMesh = [[ABlurMenu alloc]initWithTitle:@"" menuImage:@"home_menu_addhome.png" andColor:[UIColor colorWithRed:33./255 green:175./255 blue:88./255. alpha:1.] andSelect:^{
+        [self addHome];
+    }];
+    
+    NSArray *menus = @[findMeMesh,shareMesh,addMemberMesh,addHomeMesh];
+    _panelMenu = [[APanelMenuController alloc]initWithMenus:menus CloseStr:@"关闭" blurType:DefaultBlurViewType];
+    [_panelMenu addToSuperView:self.view];
+}
+
+- (void)reloadHomeInfo {
+    [[AServerFactory getServerInstance:@"AHomeServer"]getHomeByUid:0 callback:^(NSArray *homeInfos) {
+        [_homeInfos removeAllObjects];
+        [_homeInfos addObjectsFromArray:homeInfos];
+        
+        for (AHomeInfo *homeInfo in homeInfos) {
+            for (AHomeMember *member in homeInfo.members) {
+                __weak AHomeMember *memberWeak = member;
+                [member setSelected:^{
+                    [self memberNodeAction:memberWeak];
+                }];
+                
+                [member setMenuOperate:^(OperateType ot) {
+                    [self menuOperateAction:ot member:memberWeak];
+                }];
+            }
+        }
+        
+        if (_homeInfos.count > 0) {
+            AHomeInfo *homeInfo = [homeInfos firstObject];
+            ParallaxHeaderView *headerView = (ParallaxHeaderView*)self.tableView.tableHeaderView;
+            [headerView.imageView setImageWithURL:[NSURL URLWithString:homeInfo.photo]];
+        }
+        
+        [self.tableView reloadData];
+        [self stopLoading];
+        
+    } failureCallback:^(NSString *resp) {
+        [self stopLoading];
+    }];
+}
+
+- (void)memberNodeAction:(AHomeMember*)member {
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    AHomeMemberCell *homeCell = (AHomeMemberCell*)[self.tableView cellForRowAtIndexPath:indexPath];
+    
+    AHomeInfo *homeinfo = [_homeInfos firstObject];
+    int index = (int)[homeinfo.members indexOfObject:member];
+    AHomeMemberNodeView *nodeView = [homeCell.memberNodes objectAtIndex:index];
+    
+    CGPoint point = [homeCell convertPoint:nodeView.center toView:self.view.window];
+    AMenuPanelController *menuPanel = [AMenuPanelController shareInstance:point member:member];
+    
+    [self.view.window addSubview:menuPanel.view];
+}
+
+- (void)menuOperateAction:(OperateType)ot member:(AHomeMember*)member {
+    switch (ot) {
+        case AuthOperate: {
+            [[AHomeLevelController sharedInstance]phoneAuth:member];
+            break;
+        }
+            
+        case InviteOperate:
+            [[AHomeLevelController sharedInstance]sendInvite:member];
+            
+            break;
+            
+        case DeleteOperate:
+            [[AHomeLevelController sharedInstance]deleteMember:member];
+            break;
+            
+        case SelfOperate:
+            
+            break;
+        case OtherOperate:
+            
+            break;
+            
+        default:
+            break;
+    }
+    
+    [AMenuPanelController destroyInstance];
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {    
+    static NSString *CellIdentifier = @"cell";
+    UITableViewCell *cell = (UITableViewCell*)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    
+    if (cell == nil) {
+        cell = [[AHomeMemberCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+    }
+    
+    AHomeInfo *homeInfo = [_homeInfos firstObject];
+    int index = (int)homeInfo.members.count - (int)cell.subviews.count;
+    [((AHomeMemberCell*)cell) setDataForCell:homeInfo.members];
+    
+    if (index == 1) {
+        [tableView scrollRectToVisible:CGRectMake(0, tableView.contentSize.height - tableView.bounds.size.height, tableView.bounds.size.width, tableView.bounds.size.height) animated:YES];
+    }
+    
+    return cell;
+}
+
+#pragma mark - Table view data source
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger) tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return _homeInfos.count>0?1:0;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    AHomeInfo *homeInfo = [_homeInfos firstObject];
+    return [AHomeMemberCell heightForCell:(int)homeInfo.members.count];
+}
+
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    [super scrollViewDidScroll:scrollView];
+    [(ParallaxHeaderView *)self.tableView.tableHeaderView layoutHeaderViewForScrollViewOffset:scrollView.contentOffset];
+}
+
+- (void)doPaging {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]findMe];
+    
+}
+
+- (void)share {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]addShare];
+}
+
+- (void)addMember {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]addMember];
+}
+
+- (void)addHome {
+    [_panelMenu closeMenu];
+    [[AHomeLevelController sharedInstance]doNewHomeAction];
+}
+
+
+@end

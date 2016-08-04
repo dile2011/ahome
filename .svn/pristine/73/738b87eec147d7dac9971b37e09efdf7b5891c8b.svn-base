@@ -1,0 +1,30 @@
+//
+//  ABlurMenu.m
+//  demoe
+//
+//  Created by andson-dile on 15/3/6.
+//  Copyright (c) 2015年 andson. All rights reserved.
+//
+
+#import "ABlurMenu.h"
+
+@implementation ABlurMenu
+
+- (instancetype)initWithTitle:(NSString*)title menuImage:(NSString*)menuImage {
+    self = [super init];
+    _title = title;
+    _menuImage = menuImage;
+    
+    return self;
+}
+
+- (instancetype)initWithTitle:(NSString*)title menuImage:(NSString*)menuImage andSelect:(void (^)(void))onSelected {
+    self = [super init];
+    _title = title;
+    _menuImage = menuImage;
+    self.onSelected = onSelected;
+    
+    return self;
+}
+
+@end

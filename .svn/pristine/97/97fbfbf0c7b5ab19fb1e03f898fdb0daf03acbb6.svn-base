@@ -1,0 +1,25 @@
+//
+//  AMemberAttributeController.h
+//  ahome
+//
+//  Created by andson-dile on 15/6/26.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "AMergeHomeMember.h"
+#import "ABaseAttriPanelView.h"
+
+@interface AMemberAttributeController : UIViewController {
+    UIImageView *_imageView;
+    ABaseAttriPanelView *_baseAttriView;
+}
+
+@property (nonatomic) UIColor* backingImageTintColor UI_APPEARANCE_SELECTOR;
+
++ (instancetype)shareInstance:(id)member;
+- (instancetype)initWithMember:(id)member;
+
++ (void)destroyInstance;
+
+@end

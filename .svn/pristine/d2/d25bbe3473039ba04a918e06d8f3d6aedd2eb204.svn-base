@@ -1,0 +1,19 @@
+//
+//  AMergeHomeInfo.h
+//  ahome
+//
+//  Created by andson-dile on 15/6/18.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "ARecord.h"
+#import "AMergeHomeMember.h"
+#import "AHomeInfo.h"
+
+@interface AMergeHomeInfo : ARecord
+
+@property (nonatomic,retain)NSMutableArray *members;
+
+- (instancetype)initWithHomeInfo:(NSDictionary*)homeInfoDic;
+
+@end

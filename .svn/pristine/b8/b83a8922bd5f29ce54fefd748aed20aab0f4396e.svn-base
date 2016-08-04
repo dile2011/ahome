@@ -1,0 +1,35 @@
+//
+//  AFamilyLevelController.m
+//  ahome
+//
+//  Created by dilei liu on 15/6/20.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AFamilyLevelController.h"
+
+@implementation AFamilyLevelController
+
+static AFamilyLevelController *sharedInstance = nil;
++ (id)sharedInstance {
+    if (sharedInstance == nil) {
+        sharedInstance = [[AFamilyLevelController alloc] initWithIsKenBlur:YES];
+    }
+    
+    return sharedInstance;
+}
+
++ (void)destroyDealloc {
+    sharedInstance = nil;
+}
+
+- (ASideDrawer *)setSideDrawer {
+    return [[ASideDrawer alloc]initWithTitle:@"家庭圈" menuImage:@"Bracket_Home.png"];
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+}
+
+@end

@@ -1,0 +1,13 @@
+//
+//  AFamilyCollectionView.m
+//  ahome
+//
+//  Created by andson-dile on 15/7/17.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AFamilyCollectionView.h"
+
+@implementation AFamilyCollectionView
+
+@end

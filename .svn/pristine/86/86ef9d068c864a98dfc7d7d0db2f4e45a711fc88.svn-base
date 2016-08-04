@@ -1,0 +1,55 @@
+//
+//  ARootTableController.m
+//  ahome
+//
+//  Created by dilei liu on 15/1/14.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "ARootTableController.h"
+#import "ADrawerVisualStateManager.h"
+#import "MMDrawerBarButtonItem.h"
+#import "ALeftSideDrawerController.h"
+#import <QuartzCore/QuartzCore.h>
+#import "UIViewController+MMDrawerController.h"
+
+@implementation ARootTableController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupLeftMenuButton];
+    
+}
+
+-(void)setupLeftMenuButton{
+    _leftButton = [[FRDLivelyButton alloc] initWithFrame:CGRectMake(0,0,28,28)];
+    [_leftButton setStyle:kFRDLivelyButtonStyleHamburger animated:NO];
+    [_leftButton addTarget:self action:@selector(leftDrawerButtonPress:) forControlEvents:UIControlEventTouchUpInside];
+    UIBarButtonItem *buttonItem = [[UIBarButtonItem alloc] initWithCustomView:_leftButton];
+    UIBarButtonItem *negativeSpacer = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace
+                                                                                   target:nil action:nil];
+    negativeSpacer.width = -10;
+    self.navigationItem.leftBarButtonItems = @[negativeSpacer, buttonItem];
+}
+
+-(void)setupRightMenuButton{
+    MMDrawerBarButtonItem * rightDrawerButton = [[MMDrawerBarButtonItem alloc] initWithTarget:self action:@selector(rightDrawerButtonPress:)];
+    [self.navigationItem setRightBarButtonItem:rightDrawerButton animated:YES];
+}
+
+#pragma mark - Button Handlers
+-(void)leftDrawerButtonPress:(id)sender{
+    [self.mm_drawerController toggleDrawerSide:MMDrawerSideLeft animated:YES completion:nil];
+}
+
+- (void)updateLeftBtnStyle:(BOOL)isClose {
+    if (isClose) [_leftButton setStyle:kFRDLivelyButtonStyleClose animated:YES];
+    else [_leftButton setStyle:kFRDLivelyButtonStyleHamburger animated:YES];
+}
+
+-(void)rightDrawerButtonPress:(id)sender{
+    [self.mm_drawerController toggleDrawerSide:MMDrawerSideRight animated:YES completion:nil];
+}
+
+
+@end

@@ -1,0 +1,17 @@
+//
+//  AFamilyBaseCircleController.h
+//  ahome
+//
+//  Created by andson-dile on 15/7/2.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "MZBookShelfCollectionViewLayout.h"
+
+@interface AFamilyBaseCircleController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegate,MZBookshelfCollectionViewLayoutDelegate> {
+    
+    UICollectionView *_collectionView;
+}
+
+@end

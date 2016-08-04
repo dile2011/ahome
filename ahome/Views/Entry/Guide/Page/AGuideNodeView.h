@@ -1,0 +1,18 @@
+//
+//  AGuideNodeView.h
+//  demoe
+//
+//  Created by andson-dile on 15/3/3.
+//  Copyright (c) 2015年 andson. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface AGuideNodeView : UIImageView {
+    CGPoint _center;
+}
+
+- (instancetype)initWithImageName:(NSString *)imageName center:(CGPoint)center;
+- (CGSize)sizeForShowImage;
+
+@end

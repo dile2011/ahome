@@ -1,0 +1,16 @@
+//
+//  AAttributeMeController.h
+//  ahome
+//
+//  Created by andson-dile on 15/6/11.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AViewPopupController.h"
+
+@interface AAttributeMeController : AViewPopupController
+
+@property (nonatomic,assign)float width;
+@property (nonatomic,assign)int familyId;
+
+@end

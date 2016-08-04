@@ -1,0 +1,225 @@
+//
+//  AHomeLevelController.m
+//  AtHomeApp
+//
+//  Created by dilei liu on 14-8-23.
+//  Copyright (c) 2014年 ushome. All rights reserved.
+//
+
+#import "AHomeLevelController.h"
+#import "ANewHomeController.h"
+#import "AUnAtHomeController.h"
+#import "AHomeServer.h"
+
+#import "UIViewController+MJPopupViewController.h"
+#import "AQuickPopupController.h"
+#import "APopupHandler.h"
+#import "AHomePhoneAuthController.h"
+#import "AHomeInviteActiveController.h"
+#import "AHomeAddMemberController.h"
+#import "AHomeDeleteMemberController.h"
+#import "APagingPopupController.h"
+#import "AHomeShareController.h"
+#import "AAttributeMeController.h"
+#import "AAttributeMemberController.h"
+
+
+#define kPopupModalAnimationDuration 0.35
+
+@implementation AHomeLevelController
+
+
+static AHomeLevelController *sharedInstance = nil;
++ (id)sharedInstance {
+    if (sharedInstance == nil) {
+        sharedInstance = [[AHomeLevelController alloc] init];
+        sharedInstance.isMenuShow = YES;
+    }
+    
+    return sharedInstance;
+}
+
++ (void)destroyDealloc {
+    sharedInstance = nil;
+}
+
+- (instancetype)init {
+    self = [super init];
+    self.menuTitle = @"家  庭";
+    self.menuImage = @"Bracket_Home.png";
+    
+    return self;
+}
+
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = self.menuTitle;
+    [[NSNotificationCenter defaultCenter] addObserverForName:@"HomeNotification" object:nil
+                                                       queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * __unused notification) {
+                                                           
+                                                       }];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    if (self.homePage == nil) {
+        [self updateHome];
+    }
+}
+
+- (void)updateHome {
+    for (UIView *view in self.view.subviews) {
+        [view removeFromSuperview];
+    }
+    
+    if(![[AUtilities sharedInstance]isHadFamily]) {
+        AUnAtHomeController *unAtHomeCon = [[AUnAtHomeController alloc]init];
+        [self addChildViewController:unAtHomeCon];
+        [unAtHomeCon.view setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+        [self.view addSubview:unAtHomeCon.view];
+        
+    } else {
+        self.homePage = [[AHomePageController alloc]init];
+        [self.homePage.view setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+        [self.view addSubview:self.homePage.view];
+    }
+}
+
+/**
+ * 手机认证
+ */
+- (void)phoneAuth:(AHomeMember*)member {
+    
+    AQuickPopupController *popVC = [[AHomePhoneAuthController alloc]initWithMemberInfo:member];
+    [APopupHandler sharedInstance].pageHeight = 260.;
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomePhoneAuthController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [_homePage.homeInfos firstObject];
+    ((AHomePhoneAuthController*)popVC).familyId = homeInfo.familyId;
+    ((AHomePhoneAuthController*)popVC).index = member.mkey;
+    
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+/**
+ * 发送邀请
+ */
+- (void)sendInvite:(AHomeMember*)member {
+    AQuickPopupController *popVC = [[AHomeInviteActiveController alloc]initWithMemberInfo:member];
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomeInviteActiveController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [_homePage.homeInfos firstObject];
+    ((AHomeInviteActiveController*)popVC).familyId = homeInfo.familyId;
+    
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+/**
+ * 删除一个成员
+ */
+- (void)deleteMember:(AHomeMember*)member {
+    AQuickPopupController *popVC = [[AHomeDeleteMemberController alloc]initWithMemberInfo:member];
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomeDeleteMemberController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [_homePage.homeInfos firstObject];
+    ((AHomeDeleteMemberController*)popVC).familyId = homeInfo.familyId;
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+/**
+ * 添加一个成员
+ */
+- (void)addMember {
+    AQuickPopupController *popVC = [[AHomeAddMemberController alloc]init];
+    [APopupHandler sharedInstance].pageHeight = 290.;
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((AHomeAddMemberController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [_homePage.homeInfos firstObject];
+    ((AHomeAddMemberController*)popVC).familyId = homeInfo.familyId;
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+- (void)newHome {
+    ANewHomeController *newAtHomeCon = [[ANewHomeController alloc]initWithPushStyle:NO];
+    UINavigationController *navi = [[UINavigationController alloc]initWithRootViewController:newAtHomeCon];
+    [self.navigationController presentViewController:navi animated:YES completion:^{
+        
+    }];
+}
+
+//
+- (void)paging {
+    AViewPopupController *popVC = [[APagingPopupController alloc]initWithPushStyle:NO];
+    UINavigationController *navi = [[APopupHandler sharedInstance]genPopupNavigation:popVC];
+    ((APagingPopupController*)popVC).width = navi.view.frame.size.width;
+    
+    AHomeInfo *homeInfo = [_homePage.homeInfos firstObject];
+    ((APagingPopupController*)popVC).familyId = homeInfo.familyId;
+    [self presentPopupViewController:navi animationType:MJPopupViewAnimationSlideBottomBottom];
+    
+    [popVC setOnSelected:^{
+        [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    }];
+}
+
+//
+- (void)addShare {
+    AHomeShareController *shareController = [[AHomeShareController alloc]initWithPushStyle:NO];
+    UINavigationController *navi = [[UINavigationController alloc]initWithRootViewController:shareController];
+    [self.navigationController presentViewController:navi animated:YES completion:^{
+        
+    }];
+}
+
+//==============================================
+- (void)afterPhoneAuthSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [_homePage reloadHomeInfo];
+}
+
+- (void)afterMemberInviteSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [_homePage reloadHomeInfo];
+}
+
+- (void)afterMemberAddSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [_homePage reloadHomeInfo];
+}
+
+- (void)afterPagingSuccess {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [_homePage reloadHomeInfo];
+}
+
+- (void)afterMemberDeleteSucces {
+    [self dismissPopupViewControllerWithanimationType:MJPopupViewAnimationSlideBottomBottom];
+    [_homePage reloadHomeInfo];
+}
+//==============================================
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"HomeNotification" object:nil];
+}
+
+@end

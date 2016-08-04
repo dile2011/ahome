@@ -1,0 +1,56 @@
+//
+//  AHomeLevelController.h
+//  AtHomeApp
+//
+//  Created by dilei liu on 14-8-23.
+//  Copyright (c) 2014年 ushome. All rights reserved.
+//
+
+#import "ARootViewController.h"
+#import "AHomeMemberNodeView.h"
+#import "AHomePageController.h"
+#import "AHomeMember.h"
+
+@interface AHomeLevelController : ARootViewController<UIAlertViewDelegate> {
+
+}
+
+@property (nonatomic,retain)AHomePageController *homePage;
+
++ (id)sharedInstance;
++ (void)destroyDealloc;
+
+
+/**
+ * 创建AtHome
+ */
+- (void)doNewHomeAction;
+
+/**
+ * 首次在新建Home后调用
+ */
+- (void)updateHomeView;
+
+/**
+ * 家庭成员手机认证成功后回执方法
+ */
+- (void)afterPhoneAuthSuccess;
+
+/**
+ * 家庭成员手机认证成功后回执方法
+ */
+- (void)afterMemberInviteSuccess;
+
+/**
+ * 家庭成员添加成功后回执方法
+ */
+- (void)afterMemberAddSuccess;
+
+
+
+- (void)phoneAuth:(AHomeMember*)member;
+- (void)sendInvite:(AHomeMember*)member;
+- (void)addMember;
+- (void)deleteMember:(AHomeMember*)member;
+
+@end

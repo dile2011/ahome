@@ -1,0 +1,24 @@
+//
+//  ABaseViewController.h
+//  AtHomeApp
+//
+//  Created by dilei liu on 14-8-23.
+//  Copyright (c) 2014年 ushome. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "MMDrawerController.h"
+
+@interface ABaseViewController : UIViewController
+
+@property (nonatomic,assign)BOOL isPush;
+
+- (id)initWithPushStyle:(BOOL)isPush;
+- (void)setDefaultNavigationStyle;
+
+- (void)leftButtonAction;
+- (void)rightButtonAction;
+
+
+
+@end

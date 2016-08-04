@@ -1,0 +1,64 @@
+//
+//  AMergeMemberView.m
+//  ahome
+//
+//  Created by andson-dile on 15/6/18.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AMergeMemberView.h"
+#import "AMergeHomeMember.h"
+#import "UIImageView+WebCache.h"
+#import "AUserCookie.h"
+#import "AHomeMergeCell.h"
+
+#define random_size_min   80
+#define random_size_max   150
+
+@implementation AMergeMemberView
+
+- (instancetype)init {
+    self = [super init];
+    [self setBackgroundColor:[UIColor clearColor]];
+    _isAnimation = NO;
+    
+    int randNum = rand()%(random_size_max - random_size_min) + random_size_min;
+    [self setBounds:CGRectMake(0, 0, randNum, randNum)];
+    [self setCenter:CGPointMake([UIScreen mainScreen].bounds.size.width/2., [AHomeMergeCell heightForCell:1]/2.)];
+    
+    _faceImageView = [[UIImageView alloc]init];
+    _faceImageView.layer.masksToBounds = YES;
+    [_faceImageView setBackgroundColor:[UIColor clearColor]];
+    [_faceImageView setBounds:CGRectMake(0, 0, self.bounds.size.width-30, self.bounds.size.height-30)];
+    _faceImageView.center = CGPointMake(self.bounds.size.width/2., self.bounds.size.height/2.);
+    [self addSubview:_faceImageView];
+    
+    return self;
+}
+
+- (void)setData:(ARecord*)record {
+    AMergeHomeMember *mergeMember = (AMergeHomeMember*)record;
+    AUserCookie *userCookie = [AUserCookie userCookie];
+    if (userCookie.serverId == mergeMember.uid)[_faceImageView setBounds:CGRectMake(0, 0, 70, 70)];;
+
+    [_faceImageView setImageWithURL:[NSURL URLWithString:mergeMember.avatar] placeholderImage:[UIImage imageNamed:mergeMember.placeHolderImage]];
+    _faceImageView.layer.cornerRadius = _faceImageView.frame.size.width/2.;
+    
+
+    if (_isAnimation || userCookie.serverId == mergeMember.uid) return;
+     float adius = 2*[AHomeMergeCell radiusSize];
+     if (mergeMember.homeType == ParentHomeType) adius = 3*[AHomeMergeCell radiusSize];
+     CGPoint point = [[AUtilities sharedInstance]pointByCircleAngleEast:mergeMember.angle adius:adius center:self.center];
+    
+     [UIView animateKeyframesWithDuration:1. delay:.5 options:UIViewKeyframeAnimationOptionLayoutSubviews animations:^{
+         self.center = point;
+         
+     } completion:^(BOOL finished) {
+         _isAnimation = YES;
+         [[AUtilities sharedInstance]rotateView:self aroundPoint:CGPointMake([UIScreen mainScreen].bounds.size.width/2., [AHomeMergeCell heightForCell:1]/2.) adius:adius angle:mergeMember.angle complection:^(float angle) {
+             
+         }];
+     }];
+}
+
+@end

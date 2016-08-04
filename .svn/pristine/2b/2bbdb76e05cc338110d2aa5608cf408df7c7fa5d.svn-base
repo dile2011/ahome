@@ -1,0 +1,13 @@
+//
+//  AFamilyCollectionHeaderView.m
+//  ahome
+//
+//  Created by andson-dile on 15/7/17.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AFamilyCollectionHeaderView.h"
+
+@implementation AFamilyCollectionHeaderView
+
+@end

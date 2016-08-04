@@ -1,0 +1,31 @@
+//
+//  AParentFamilyController.m
+//  ahome
+//
+//  Created by andson-dile on 15/7/1.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AParentFamilyController.h"
+
+@implementation AParentFamilyController
+
+static AParentFamilyController *sharedInstance = nil;
++ (id)sharedInstance {
+    if(sharedInstance == nil) {
+        sharedInstance = [[AParentFamilyController alloc] initWithIsKenBlur:YES];
+    }
+    
+    return sharedInstance;
+}
+
++ (void)destroyDealloc {
+    sharedInstance = nil;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = @"父母族圈";
+    
+}
+@end

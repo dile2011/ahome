@@ -1,0 +1,41 @@
+//
+//  ARootTableController.h
+//  ahome
+//
+//  Created by dilei liu on 15/1/14.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "ABaseTableController.h"
+#import "FRDLivelyButton.h"
+
+@interface ARootTableController : ABaseTableController {
+    FRDLivelyButton *_leftButton;
+}
+
+
+/**
+ * 导航菜单显示标题
+ */
+@property (nonatomic,strong)NSString *menuTitle;
+
+/**
+ * 导航菜单显示标题
+ */
+@property (nonatomic,strong)NSString *menuImage;
+
+/**
+ * 是否主菜单上显示
+ */
+@property (nonatomic,assign)BOOL isMenuShow;
+
+
+-(void)setupLeftMenuButton;
+-(void)leftDrawerButtonPress:(id)sender;
+
+/**
+ *
+ */
+- (void)updateLeftBtnStyle:(BOOL)isClose;
+
+@end

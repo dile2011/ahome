@@ -1,0 +1,44 @@
+//
+//  AFamilyLevelController.m
+//  ahome
+//
+//  Created by dilei liu on 15/6/20.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AFamilyLevelController.h"
+#import "AFamilyCircleView.h"
+#import "AFamilyCircle.h"
+
+#define bottom_toolbar_size 55
+
+@implementation AFamilyLevelController
+
+static AFamilyLevelController *sharedInstance = nil;
++ (id)sharedInstance {
+    if (sharedInstance == nil) {
+        sharedInstance = [[AFamilyLevelController alloc] initWithIsKenBlur:NO];
+    }
+    
+    return sharedInstance;
+}
+
++ (void)destroyDealloc {
+    sharedInstance = nil;
+}
+
+- (ASideDrawer *)setSideDrawer {
+    return [[ASideDrawer alloc]initWithTitle:@"家族圈" menuImage:@"Bracket_Home.png"];
+}
+
+- (void)newBussiness {
+    _homeCircle = [[AFamilyHomeCircleController alloc]init];
+}
+
+- (void)setBussiness {
+    CGRect theFrame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
+    [_homeCircle setTheFrame:theFrame];
+    [self.view addSubview:_homeCircle.view];
+}
+
+@end

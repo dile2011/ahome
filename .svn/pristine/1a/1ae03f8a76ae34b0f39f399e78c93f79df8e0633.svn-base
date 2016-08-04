@@ -1,0 +1,160 @@
+//
+//  AMenuPanelView.m
+//  demoe
+//
+//  Created by andson-dile on 15/3/12.
+//  Copyright (c) 2015年 andson. All rights reserved.
+//
+
+#import "AMenuPanelView.h"
+#import "AHomeMember.h"
+#import "UIImageView+WebCache.h"
+
+#define title_size      15
+#define maring_v_size   3
+
+#define top_view_size       20
+#define bottom_view_size    40
+
+@implementation AMenuPanelView
+
+- (instancetype)initWithHomeMember:(AHomeMember*)member {
+    self = [super init];
+    _member = member;
+    [self setBackgroundColor:[UIColor colorWithRed:5/255. green:5/255. blue:5/255. alpha:1.]];
+    self.layer.cornerRadius = 6;
+    self.opaque = NO;
+    
+    self.layer.shadowOffset = CGSizeMake(2, 2);
+    self.layer.shadowOpacity = 0.80;
+
+    return self;
+}
+
+- (void)setBounds:(CGRect)bounds {
+    [super setBounds:bounds];
+    
+    UIView *titleBlock = [[UIView alloc]initWithFrame:CGRectMake(0, 0, bounds.size.width, top_view_size)];
+    [titleBlock setBackgroundColor:[UIColor clearColor]];
+    [self addSubview:titleBlock];
+    
+    NSString *title = _member.uname;
+    if (_member.memberState == StateAuth) {
+        title = @"手机认证";
+        
+    } else if (_member.memberState == StateInvite) {
+        title = @"成员邀请";
+        
+    } else if (_member.memberState == StateWaitInvite) {
+        title = @"等待邀请";
+    }
+    [self titleViewWithTitle:title titleView:titleBlock];
+
+    
+    UIView *contextView = [[UIView alloc]initWithFrame:CGRectMake(0, titleBlock.frame.size.height+titleBlock.frame.origin.y, bounds.size.width, bounds.size.height-(titleBlock.frame.size.height+titleBlock.frame.origin.y))];
+    [self addSubview:contextView];
+    
+    UIView *view = [[UIView alloc]initWithFrame:CGRectMake(maring_v_size, maring_v_size, self.frame.size.width-2*maring_v_size, contextView.frame.size.height/2.-2*maring_v_size)];
+    UIButton *button = [self actionButtonWithIcon:@"menupanel_del_box.png" andMenuTitle:title andView:view];
+    [view addSubview:button];
+    [contextView addSubview:view];
+    
+    UIView *view1 = [[UIView alloc]initWithFrame:CGRectMake(maring_v_size, contextView.frame.size.height/2.+maring_v_size, self.frame.size.width-2*maring_v_size, contextView.frame.size.height/2.-2*maring_v_size)];
+    UIButton *button1 = [self actionButtonWithIcon:@"menupanel_trash_box.png" andMenuTitle:title andView:view1];
+    [view1 addSubview:button1];
+    [contextView addSubview:view1];
+}
+
+- (void)titleViewWithTitle:(NSString*)title titleView:(UIView*)titleView {
+    UILabel *menuTitleLabel = [[UILabel alloc]initWithFrame:CGRectMake(3, 0, 3*titleView.frame.size.width/4-3, titleView.frame.size.height)];
+    menuTitleLabel.text = title;
+    [menuTitleLabel setFont:[UIFont systemFontOfSize:14]];
+    menuTitleLabel.textAlignment = NSTextAlignmentLeft;
+    [menuTitleLabel setTextColor:[UIColor colorWithRed:92./255 green:214./255 blue:101./255. alpha:1.]];
+    menuTitleLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    menuTitleLabel.numberOfLines = 1;
+    [menuTitleLabel setBackgroundColor:[UIColor clearColor]];
+    [titleView addSubview:menuTitleLabel];
+    
+    UILabel *roleLabel = [[UILabel alloc]initWithFrame:CGRectMake(3*titleView.frame.size.width/4., 0, titleView.frame.size.width/4.-5, titleView.frame.size.height)];
+    roleLabel.text = _member.part;
+    [roleLabel setFont:[UIFont systemFontOfSize:10]];
+    roleLabel.textAlignment = NSTextAlignmentRight;
+    [roleLabel setTextColor:[UIColor whiteColor]];
+    roleLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    roleLabel.numberOfLines = 1;
+    [roleLabel setBackgroundColor:[UIColor clearColor]];
+    [titleView addSubview:roleLabel];
+}
+
+- (void)faceView:(UIView*)view {
+    UIImageView *imageView = [[UIImageView alloc]initWithFrame:CGRectMake(view.frame.size.width-maring_v_size-view.frame.size.height, maring_v_size, view.frame.size.height-2*maring_v_size, view.frame.size.height-2*maring_v_size)];
+    imageView.layer.cornerRadius = imageView.bounds.size.width/2.;
+    imageView.layer.masksToBounds = YES;
+    [imageView setImageWithURL:[NSURL URLWithString:_member.avatar]];
+    [view addSubview:imageView];
+    
+    //[self startRotateFace:5 andDuration:2 andRotationView:imageView];
+}
+
+- (void)startRotateFace:(int)rotations andDuration:(float)duration andRotationView:(UIView*)rotaView{
+    CABasicAnimation* rotationAnimation;
+    rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
+    rotationAnimation.toValue = [NSNumber numberWithFloat: M_PI * 2.0];
+    rotationAnimation.duration = duration;
+    rotationAnimation.cumulative = NO;
+    rotationAnimation.repeatCount = rotations;
+    
+    [rotaView.layer addAnimation:rotationAnimation forKey:@"rotationAnimation"];
+}
+
+-(UIButton *)actionButtonWithIcon:(NSString *)iconName andMenuTitle:(NSString*)title andView:(UIView*)actionView {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.frame = CGRectMake(0, 0, actionView.frame.size.width, actionView.frame.size.height);
+    
+    UIView *buttonView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, actionView.frame.size.width, actionView.frame.size.height)];
+    buttonView.backgroundColor = [UIColor colorWithRed:24./255 green:24./255 blue:24./255 alpha:1.];
+    buttonView.layer.cornerRadius = 6;
+    buttonView.layer.masksToBounds = YES;
+    buttonView.opaque = NO;
+    
+    
+    UIImageView *cirleView = [[UIImageView alloc]initWithFrame:CGRectMake(3*maring_v_size, 3*maring_v_size, buttonView.frame.size.height-6*maring_v_size, buttonView.frame.size.height-6*maring_v_size)];
+    cirleView.layer.cornerRadius = cirleView.frame.size.width/2.;
+    [cirleView setBackgroundColor:[UIColor whiteColor]];
+    [buttonView addSubview:cirleView];
+    
+    
+    UIImageView *icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:iconName]];
+    [icon setFrame:CGRectMake(2*maring_v_size, 2*maring_v_size, cirleView.frame.size.height-4*maring_v_size, cirleView.frame.size.height-4*maring_v_size)];
+    [cirleView addSubview:icon];
+    
+    UILabel *menuTitleLabel = [[UILabel alloc]initWithFrame:CGRectMake(icon.frame.origin.x+icon.frame.size.width, 0, buttonView.frame.size.width-(icon.frame.origin.x+icon.frame.size.width), buttonView.frame.size.height)];
+    menuTitleLabel.text = title;
+    [menuTitleLabel setFont:[UIFont systemFontOfSize:18]];
+    menuTitleLabel.textAlignment = NSTextAlignmentCenter;
+    [menuTitleLabel setTextColor:[UIColor whiteColor]];
+    menuTitleLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    menuTitleLabel.numberOfLines = 1;
+    [menuTitleLabel setBackgroundColor:[UIColor clearColor]];
+    [buttonView addSubview:menuTitleLabel];
+    
+    [button setBackgroundImage:[self imageWithView:buttonView] forState:UIControlStateNormal];
+    
+    return button;
+}
+
+-(UIImage *)imageWithView:(UIView *)view {
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.opaque, 0.0);
+    [view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage * img = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return img;
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+}
+
+
+@end

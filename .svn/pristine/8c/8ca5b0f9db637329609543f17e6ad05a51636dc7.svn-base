@@ -1,0 +1,96 @@
+//
+//  AFamilyLevelController.m
+//  ahome
+//
+//  Created by dilei liu on 15/6/20.
+//  Copyright (c) 2015年 ushome. All rights reserved.
+//
+
+#import "AFamilyLevelController.h"
+#import "AFamilyCircleView.h"
+#import "AFamilyCircle.h"
+
+#define bottom_toolbar_size 55
+
+@implementation AFamilyLevelController
+
+static AFamilyLevelController *sharedInstance = nil;
++ (id)sharedInstance {
+    if (sharedInstance == nil) {
+        sharedInstance = [[AFamilyLevelController alloc] initWithIsKenBlur:YES];
+    }
+    
+    return sharedInstance;
+}
+
++ (void)destroyDealloc {
+    sharedInstance = nil;
+}
+
+- (ASideDrawer *)setSideDrawer {
+    return [[ASideDrawer alloc]initWithTitle:@"家族圈" menuImage:@"Bracket_Home.png"];
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    _homeCircle = [[AFamilyHomeCircleController alloc]init];
+    _parentCircle = [[AFamilyParentCircleController alloc]init];
+    _friendCircle = [[AFamilyFriendCircleController alloc]init];
+    
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage imageNamed:@"family_navi_bg.png"]forBarPosition:UIBarPositionAny barMetrics:UIBarMetricsDefault];
+    [self.navigationController.navigationBar setShadowImage:[UIImage new]];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    if (self.navigationItem.titleView) return;
+    
+    UIView *toolBarView = [[UIView alloc]initWithFrame:CGRectMake(0, self.view.frame.size.height-bottom_toolbar_size, self.view.frame.size.width, bottom_toolbar_size)];
+    [toolBarView setBackgroundColor:[UIColor clearColor]];
+    [self.view addSubview:toolBarView];
+    
+    AFamilyCircle *homeCircel = [[AFamilyCircle alloc]initWithCircleName:@"家庭圈" isUnlock:YES onSelect:^{
+        [self.view addSubview:_homeCircle.view];
+    }];
+    
+    AFamilyCircle *parentCircel = [[AFamilyCircle alloc]initWithCircleName:@"父母圈" isUnlock:YES onSelect:^{
+        [self.view addSubview:_parentCircle.view];
+    }];
+    
+    AFamilyCircle *FriendCircel = [[AFamilyCircle alloc]initWithCircleName:@"亲友圈" isUnlock:YES onSelect:^{
+        [self.view addSubview:_friendCircle.view];
+    }];
+    
+    AFamilyCircleView *circleView = [[AFamilyCircleView alloc]initWIthCircles:@[homeCircel,parentCircel,FriendCircel] frame:CGRectMake(30, 0, SCREEN_WIDTH-90, self.navigationController.navigationBar.frame.size.height-4)];
+    self.navigationItem.titleView = circleView;
+    
+    [_homeCircle.view setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height-bottom_toolbar_size)];
+    [_parentCircle.view setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height-bottom_toolbar_size)];
+    [_friendCircle.view setFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height-bottom_toolbar_size)];
+    
+    [self.view addSubview:_homeCircle.view];
+}
+
+- (void)addKenBurnView {
+    _kenBurnsView = [[JSAnimatedImagesView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) isAnimatioin:NO];
+    _kenBurnsView.delegate = self;
+    [self setView:_kenBurnsView];
+    [self.view addSubview:[self blurView]];
+}
+
+- (UIView*)blurView {
+    UIVisualEffectView *visualEffectView = nil;
+    CGRect blurBounds = CGRectMake(0, 0, 0, 0);
+    
+    blurBounds = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
+    
+    UIVisualEffect *blurEffect;
+    blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    visualEffectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    visualEffectView.frame = blurBounds;
+    
+    return visualEffectView;
+}
+
+@end

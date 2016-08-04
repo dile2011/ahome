@@ -1,0 +1,104 @@
+//
+//  ASideDrawerController.m
+//  AtHomeApp
+//
+//  Created by dilei liu on 14-8-23.
+//  Copyright (c) 2014年 ushome. All rights reserved.
+//
+
+#import "ASideDrawerController.h"
+#import "MMSideDrawerTableViewCell.h"
+#import "MMSideDrawerSectionHeaderView.h"
+#import "UIViewController+MMDrawerController.h"
+#import "FBShimmeringView.h"
+
+@implementation ASideDrawerController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.tableHeaderHeight = 130;
+    
+    CGRect rect = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height-50);
+    self.tableView = [[UITableView alloc] initWithFrame:rect style:UITableViewStyleGrouped];
+    [self.tableView setDelegate:self];
+    [self.tableView setDataSource:self];
+    [self.view addSubview:self.tableView];
+    
+    [self.tableView setAutoresizingMask:UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight];
+    [self.tableView setSeparatorColor:[UIColor colorWithRed:1 green:1.0 blue:1.0 alpha:.2]];
+    [self.tableView setBackgroundColor:[UIColor colorWithRed:0 green:0 blue:0 alpha:.68]];
+    
+    
+    UIView *copyrightView = [[UIView alloc]initWithFrame:CGRectMake(0, self.view.frame.size.height-50, self.view.frame.size.width, 50)];
+    [copyrightView setBackgroundColor:[UIColor colorWithRed:0 green:0 blue:0 alpha:.68]];
+    [self.view addSubview:copyrightView];
+    
+    FBShimmeringView *shimmeringView = [[FBShimmeringView alloc] init];
+    shimmeringView.shimmering = YES;
+    shimmeringView.shimmeringBeginFadeDuration = .7;
+    shimmeringView.shimmeringOpacity = 0.3;
+    shimmeringView.frame = CGRectMake(60, 0, copyrightView.frame.size.width-60, copyrightView.frame.size.height);
+    [copyrightView addSubview:shimmeringView];
+    
+    UILabel *copyrightLabel = [[UILabel alloc]init];
+    [copyrightView addSubview:copyrightLabel];
+    [copyrightLabel setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:16]];
+    copyrightLabel.textAlignment = NSTextAlignmentLeft;
+    [copyrightLabel setTextColor:[UIColor whiteColor]];
+    copyrightLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    copyrightLabel.numberOfLines = 1;
+    [copyrightLabel setBackgroundColor:[UIColor clearColor]];
+    [copyrightLabel setText:@"北京星点科技有限公司"];
+    shimmeringView.contentView = copyrightLabel;
+    
+    
+    UIImageView *logoImageView = [[UIImageView alloc]initWithFrame:CGRectMake(10, (copyrightView.frame.size.height-40)/2., 40, 40)];
+    [copyrightView addSubview:logoImageView];
+}
+
+#pragma mark - Table view data source
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return 0;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return self.tableHeaderHeight;
+}
+
+-(UIView*)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    MMSideDrawerSectionHeaderView *headerView =  [[MMSideDrawerSectionHeaderView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(tableView.bounds), self.tableHeaderHeight)];
+    [headerView setAutoresizingMask:UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth];
+    return headerView;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    static NSString *reuseIdentifier = @"cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseIdentifier];
+    if (cell == nil) {
+        cell = [[MMSideDrawerTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
+        cell.userInteractionEnabled = YES;
+        [cell setSelectionStyle:UITableViewCellSelectionStyleBlue];
+    }
+    
+    return cell;
+}
+
+#pragma mark - Table view delegate
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    UINavigationController *navigationLevel = [self.mm_drawerController.levelControllers objectAtIndex:indexPath.row];
+    [self.mm_drawerController setCenterViewController:navigationLevel withFullCloseAnimation:YES completion:nil];
+    
+    [tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (void) entryUserCenterController {
+    UINavigationController *navigationLevel = [self.mm_drawerController.levelControllers lastObject];
+    [self.mm_drawerController setCenterViewController:navigationLevel withFullCloseAnimation:YES completion:nil];
+}
+
+@end
